@@ -66,6 +66,7 @@ import org.apache.hive.jdbc.Utils;
 import org.apache.hive.jdbc.Utils.JdbcConnectionParams;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.hive.jdbc.logs.InPlaceUpdateStream;
+import com.sun.security.auth.module.UnixSystem;
 
 public class Commands {
   private final BeeLine beeLine;
@@ -1478,7 +1479,7 @@ public class Commands {
 
 
   public boolean connect(String line) throws Exception {
-    String example = "Usage: connect <url> <username> <password> [driver]"
+    String example = "Usage: connect <url> [driver]"
         + BeeLine.getSeparator();
 
     String[] parts = beeLine.split(line);
@@ -1491,9 +1492,10 @@ public class Commands {
     }
 
     String url = parts.length < 2 ? null : parts[1];
-    String user = parts.length < 3 ? null : parts[2];
-    String pass = parts.length < 4 ? null : parts[3];
-    String driver = parts.length < 5 ? null : parts[4];
+    UnixSystem unix = new UnixSystem();
+    String user = unix.getUsername();
+    String pass = "";
+    String driver = parts.length < 3 ? null : parts[2];
 
     Properties props = new Properties();
     if (url != null) {
@@ -1621,7 +1623,7 @@ public class Commands {
       }
     }
 
-    beeLine.info("Connecting to " + url);
+    beeLine.info("Connecting to " + url + " as " + username);
     if (Utils.parsePropertyFromUrl(url, JdbcConnectionParams.AUTH_PRINCIPAL) == null) {
       String urlForPrompt = url.substring(0, url.contains(";") ? url.indexOf(';') : url.length());
       if (username == null) {
